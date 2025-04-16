@@ -2,8 +2,8 @@ import pyconll
 import pandas as pd
 
 
-def roleCounter(path_to_sample: str, path_to_result: str) -> int:
-    """ 
+def roleCounter(path_to_sample: str, path_to_result: str, targetUpos: list[str]) -> int:
+    """
     Counts the number of A-, S- and O-roles, that are represented in each language of a sample,
     and creates a dataframe with this information.
 
@@ -12,6 +12,8 @@ def roleCounter(path_to_sample: str, path_to_result: str) -> int:
             The path to the list of .conllu files of languages that were included in a sample.
         path_to_result: str
             The path to the future .csv file with pivot table.
+        targetUpos: list[str]
+            The list of target upos-labels (e.g nouns, proper nouns or pronouns).
 
     Return:
         int: 0 in case of successful execution
@@ -45,12 +47,8 @@ def roleCounter(path_to_sample: str, path_to_result: str) -> int:
                 ):
                     is_passive = True
 
-                # exclude pronouns, aux as heads and passive constructions
-                if (
-                    token.upos in ["NOUN", "PROPN", "PRON"]
-                    and headUpos == "VERB"
-                    and not is_passive
-                ):
+                # include only target upos-labels and exclude aux as heads and passive constructions
+                if token.upos in targetUpos and headUpos == "VERB" and not is_passive:
                     # object detection
                     if token.deprel in ["obj", "iobj"]:
                         roles[language_name]["O"] += 1
@@ -61,7 +59,7 @@ def roleCounter(path_to_sample: str, path_to_result: str) -> int:
                         for sibling in sentence:
                             if (
                                 sibling.head == token.head
-                                and sibling.upos in ["NOUN", "PROPN", "PRON"]
+                                and sibling.upos in targetUpos
                                 and sibling.deprel in ["obj", "iobj"]
                             ):
                                 has_sibling = True
